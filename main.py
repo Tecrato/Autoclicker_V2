@@ -3,7 +3,7 @@ from platformdirs import user_config_path
 from pygame import Vector2
 from threading import Thread
 
-from Utilidades import Create_text, Create_boton, List_Box, GUI, mini_GUI
+from Utilidades_pygame import Text, Button, List, GUI, mini_GUI, Input
 
 from funcs import Other_funcs
 
@@ -82,7 +82,7 @@ class AutoClicker(Other_funcs):
             'agregar pos': f'{pynput.keyboard.Key.f4}',
             'reset': f'{pynput.keyboard.Key.f10}',
             'imitar': f'{pynput.keyboard.Key.f6}',
-            'solo mover': f'{pynput.keyboard.Key.f17}',
+            'solo mover': f'{pynput.keyboard.Key.f7}',
             'capturar': f'{pynput.keyboard.Key.f11}'
         })
 
@@ -104,78 +104,81 @@ class AutoClicker(Other_funcs):
                 
     def generate_objs(self) -> None:
         # Cosas varias
-        Utilidades.GUI.configs['fuente_simbolos'] = self.font_simbolos
-        self.GUI_manager = GUI.GUI_admin()
         self.Mini_GUI_manager = mini_GUI.mini_GUI_admin(self.display_rect)
         self.Func_pool = Utilidades.Funcs_pool()
 
-        self.titulo_principal = Create_text('Autoclicker', 26, self.font_mononoki, (self.display_rect.centerx, 40))
-        self.btn_extras = Create_boton('', 26, self.font_simbolos, (self.display_rect.w, 0), 20, 'topright', 'white',
+        self.titulo_principal = Text('Autoclicker', 26, self.font_mononoki, (self.display_rect.centerx, 40))
+        self.btn_extras = Button('', 26, self.font_simbolos, (self.display_rect.w, 0), 20, 'topright', 'white',
                                        (20, 20, 20), (50, 50, 50), 0, -1, border_width=-1,
                                        func=self.func_main_to_extras)
-        self.btn_configs = Create_boton('', 26, self.font_simbolos, (0, 0), 20, 'topleft', 'white', (20, 20, 20),
+        self.btn_configs = Button('', 26, self.font_simbolos, (0, 0), 20, 'topleft', 'white', (20, 20, 20),
                                         (50, 50, 50), 0, -1, border_width=-1, func=self.func_main_to_config)
 
-        self.lista_perfiles = List_Box((self.display_rect.w*.8,self.display_rect.h/2), (self.display_rect.centerx - (self.display_rect.w*.8)/2, self.titulo_principal.rect.bottom + 10),
-                                       None, 14, 3, header=True, text_header='Perfiles', selected_color=(90,90,90),
+        self.lista_perfiles = List((self.display_rect.w*.8,self.display_rect.h/2), (self.display_rect.centerx - (self.display_rect.w*.8)/2, self.titulo_principal.rect.bottom + 10),
+                                       [None], 14, 3, header=True, text_header='Perfiles', selected_color=(90,90,90),
                                        background_color=(0,0,0), smothscroll=False, font=self.font_mononoki, padding_top=5, padding_left=5)
-        self.btn_nuevo_perfil = Create_boton('Agregar Nuevo', 14, self.font_mononoki, 
-                                             (self.lista_perfiles.rect.centerx+59,self.lista_perfiles.rect.top),
-                                              10,'bottom', 'black', 'darkgrey', 'lightgrey', 0, 0, border_width=-1, height=29,
-                                              func=self.guardar_perfil)
-        self.btn_reload_list = Create_boton('', 13, self.font_simbolos, (self.ventana_rect.w - 35, 75), 16,
+        self.btn_nuevo_perfil = Button(
+            'Agregar Nuevo', 14, self.font_mononoki,
+            (self.lista_perfiles.rect.centerx+59,self.lista_perfiles.rect.top),
+            10,'bottom', 'black', 'darkgrey', 'lightgrey', 0, 0, border_width=-1, height=29,
+            func=self.guardar_perfil
+        )
+        self.btn_reload_list = Button('', 13, self.font_simbolos, (self.ventana_rect.w - 35, 75), 16,
                                             'topright', 'black', 'darkgrey', 'lightgrey', 0, border_width=1,
                                             border_radius=0, border_top_right_radius=20,
                                             func=self.reload_list)
         
         # Inputs
-        self.input_repeticiones = Utilidades.Input_text(Vector2(self.lista_perfiles.rect.bottomleft)+(0,20), (12,self.display_rect.w*.4), 
-                                                        self.font_mononoki, 'Repeticiones', padding=20,border_radius=2)
-        self.input_coldown = Utilidades.Input_text(Vector2(self.lista_perfiles.rect.centerx,self.lista_perfiles.rect.bottom)+(1,20), 
-                                                   (12,self.display_rect.w*.4), self.font_mononoki, 'Seg/Repeticiones', padding=20,
-                                                   border_radius=2)
+        self.input_repeticiones = Input(
+            Vector2(self.lista_perfiles.rect.bottomleft)+(0,20), width=self.display_rect.w*.4, text_size=12, 
+            font=self.font_mononoki, text_value='Repeticiones', padding=20,border_radius=2
+            )
+        self.input_coldown = Input(
+            Vector2(self.lista_perfiles.rect.centerx,self.lista_perfiles.rect.bottom)+(1,20), 
+            width=self.display_rect.w*.4, text_size=12, font=self.font_mononoki,border_radius=2
+            )
         
         # Botones
-        self.btn_agregar_posicion = Create_boton('Agregar pos', 14, self.font_mononoki,
+        self.btn_agregar_posicion = Button('Agregar pos', 14, self.font_mononoki,
                                                  Vector2(self.input_repeticiones.rect2.bottomleft)+(0,5), dire='topleft', 
                                                  width=self.display_rect.w*.4, func=lambda:self.appli_func('agregar pos'))
-        self.btn_capturar_mouse = Create_boton('Capturar Mouse', 14, self.font_mononoki,
+        self.btn_capturar_mouse = Button('Capturar Mouse', 14, self.font_mononoki,
                                                  Vector2(self.input_coldown.rect2.bottomleft)+(0,5), dire='topleft', 
                                                  width=self.display_rect.w*.4, func=lambda: self.appli_func('capturar',1 if self.capturando else 0))
-        self.btn_imitar_sin_click = Create_boton('Solo Mover', 14, self.font_mononoki,
+        self.btn_imitar_sin_click = Button('Solo Mover', 14, self.font_mononoki,
                                                  Vector2(self.btn_agregar_posicion.rect.bottomleft)+(0,5), dire='topleft', 
                                                  width=self.display_rect.w*.4, func=lambda:self.appli_func('solo mover'))
-        self.btn_imitar = Create_boton('Imitar', 14, self.font_mononoki,
+        self.btn_imitar = Button('Imitar', 14, self.font_mononoki,
                                                  Vector2(self.btn_capturar_mouse.rect.bottomleft)+(0,5), dire='topleft', 
                                                  width=self.display_rect.w*.4, func=lambda:self.appli_func('imitar'))
         
-        self.btn_reset = Create_boton('Reset', 14, self.font_mononoki,
+        self.btn_reset = Button('Reset', 14, self.font_mononoki,
                                                  Vector2(self.btn_imitar_sin_click.rect.bottomright)+(2,25), dire='center', 
                                                  width=self.display_rect.w*.4, func=lambda:self.appli_func('reset'))
         
 
         # Pantalla de configuraciones
-        self.text_config_title = Create_text('Configuraciones', 24, self.font_mononoki,
+        self.text_config_title = Text('Configuraciones', 24, self.font_mononoki,
                                              (self.display_rect.centerx, 30), with_rect=True, color_rect=(20,20,20))
-        self.btn_config_exit = Create_boton('', 26, self.font_simbolos, (self.ventana_rect.w, 0), 20, 'topright',
+        self.btn_config_exit = Button('', 26, self.font_simbolos, (self.ventana_rect.w, 0), 20, 'topright',
                                             'white', (20, 20, 20), (50, 50, 50), 0, -1, border_width=-1,
                                             func=self.func_configs_to_main)
         
 
         # Pantalla de extras
-        self.text_extras_title = Create_text('Extras', 26, self.font_mononoki, (self.display_rect.centerx, 30))
-        self.btn_extras_exit = Create_boton('', 26, self.font_simbolos, (self.display_rect.w, 0), 20, 'topright',
+        self.text_extras_title = Text('Extras', 26, self.font_mononoki, (self.display_rect.centerx, 30))
+        self.btn_extras_exit = Button('', 26, self.font_simbolos, (self.display_rect.w, 0), 20, 'topright',
                                             'white', (20, 20, 20), (50, 50, 50), 0, -1, border_width=-1,
                                             func=self.func_extras_to_main)
 
-        self.text_extras_version = Create_text('Version '+self.version, 26, self.font_mononoki, self.display_rect.bottomright,
+        self.text_extras_version = Text('Version '+self.version, 26, self.font_mononoki, self.display_rect.bottomright,
                                                'bottomright')
 
-        self.text_extras_mi_nombre = Create_text('Edouard Sandoval', 30, self.font_mononoki, (self.display_rect.centerx, 100),
+        self.text_extras_mi_nombre = Text('Edouard Sandoval', 30, self.font_mononoki, (self.display_rect.centerx, 100),
                                                  'center')
-        self.btn_extras_link_github = Create_boton('', 30, self.font_simbolos, (self.display_rect.centerx*.8, 200), 20, 'bottomright',
+        self.btn_extras_link_github = Button('', 30, self.font_simbolos, (self.display_rect.centerx*.8, 200), 20, 'bottomright',
                                                    func=lambda: os.startfile('http://github.com/Tecrato'))
-        self.btn_extras_link_youtube = Create_boton('輸', 30, self.font_simbolos, (self.display_rect.centerx*1.2, 200), 20, 'bottomleft',
+        self.btn_extras_link_youtube = Button('輸', 30, self.font_simbolos, (self.display_rect.centerx*1.2, 200), 20, 'bottomleft',
                                                     func=lambda: os.startfile(
                                                         'http://youtube.com/channel/UCeMfUcvDXDw2TPh-b7UO1Rw'))
 
@@ -345,7 +348,7 @@ class AutoClicker(Other_funcs):
             mouse_pos = (-500,-500)
         self.ventana.fill((20, 20, 20))
         for x in self.list_to_draw:
-            if isinstance(x, Create_boton):
+            if isinstance(x, Button):
                 x.draw(self.ventana, mouse_pos)
             else:
                 x.draw(self.ventana)
@@ -360,18 +363,12 @@ class AutoClicker(Other_funcs):
 
             mx, my = pag.mouse.get_pos()
             eventos = pag.event.get()
-            self.GUI_manager.input_update(eventos)
             for x in self.list_inputs:
                 x.eventos_teclado(eventos)
 
             for evento in eventos:
                 if self.eventos_en_comun(evento):
                     break
-                elif self.GUI_manager.active >= 0:
-                    if evento.type == pag.KEYDOWN and evento.key == pag.K_ESCAPE:
-                        self.GUI_manager.pop()
-                    elif evento.type == pag.MOUSEBUTTONDOWN and evento.button == 1:
-                        self.GUI_manager.click((mx, my))
                 elif evento.type == pag.KEYDOWN:
                     ...
                 elif evento.type == pag.MOUSEBUTTONDOWN and evento.button == 1:
@@ -382,6 +379,11 @@ class AutoClicker(Other_funcs):
                     for x in self.list_to_click:
                         if x.click(evento.pos):
                             break
+                    for x in self.list_to_draw:
+                        if isinstance(x, Button):
+                            x.draw(self.ventana, (mx,my))
+                        elif isinstance(x,List):
+                            x.draw(self.ventana)
                 elif evento.type == pag.MOUSEBUTTONUP and evento.button == 1:
                     self.lista_perfiles.scroll = False
                 elif evento.type == pag.MOUSEWHEEL and self.lista_perfiles.rect.collidepoint((mx, my)):
@@ -403,15 +405,17 @@ class AutoClicker(Other_funcs):
                             )
                 elif evento.type == pag.MOUSEMOTION:
                     for x in self.list_to_draw:
-                        if isinstance(x, Utilidades.Create_boton):
+                        if isinstance(x, Button):
                             x.draw(self.ventana, (mx,my))
+                        elif isinstance(x,List):
+                            x.draw(self.ventana)
+                        x.update_hover((mx,my))
 
-                    self.GUI_manager.draw(self.ventana, (mx, my))
-                    self.Mini_GUI_manager.draw(self.ventana, (mx, my))
+                    self.Mini_GUI_manager.draw(self.ventana)
+                    
 
             for x in self.list_to_draw:
-                if isinstance(x, Utilidades.Input_text):
-                    x.draw(self.ventana)
+                x.draw(self.ventana)
             pag.display.flip()
         
     def draw_screen_extras(self,mouse_pos=None):
@@ -419,10 +423,11 @@ class AutoClicker(Other_funcs):
             mouse_pos = (-500,-500)
         self.display.fill((20, 20, 20))
         for x in self.list_to_draw_extras:
-            if isinstance(x, Create_boton):
+            if isinstance(x, Button):
                 x.draw(self.display, mouse_pos)
             else:
                 x.draw(self.display)
+            x.update_hover(mouse_pos)
         self.ventana.blit(self.display,(0,0))
         pag.display.flip()
 
@@ -452,10 +457,11 @@ class AutoClicker(Other_funcs):
             mouse_pos = (-500,-500)
         self.display.fill((20, 20, 20))
         for x in self.list_to_draw_configs:
-            if isinstance(x, Create_boton):
+            if isinstance(x, Button):
                 x.draw(self.display, mouse_pos)
             else:
                 x.draw(self.display)
+            x.update_hover(mouse_pos)
         self.ventana.blit(self.display,(0,0))
         pag.display.flip()
     def screen_configs(self):

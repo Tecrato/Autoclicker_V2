@@ -1,7 +1,7 @@
 import pygame as pag, sqlite3
 from tkinter.simpledialog import askstring
 
-from Utilidades import GUI
+from Utilidades_pygame import GUI
 
 
 class Other_funcs:
