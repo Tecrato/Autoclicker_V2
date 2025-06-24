@@ -1,0 +1,15 @@
+# -----------------------||||||||||||||||||||||||||||--------------------------------#
+2.1 - 24/6/2025
+
+# Cosas nuevas
+ - Boton capturar mouse funcionando
+ - Boton reset funcionando
+
+# Cambios
+ - Agregado botón detener
+ - Agregado el atajo a modo texto en sus botones
+ - lista un poco mas grande
+ - Los botones tambien cambian de color
+
+# Bugs
+ - mas trys en detener , y agregado a exit()

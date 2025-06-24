@@ -2,7 +2,6 @@ import pygame as pag
 import Utilidades as uti
 import Utilidades_pygame as uti_pag
 import time
-# import pyautogui as pg
 import pynput
 import os
 
@@ -38,10 +37,10 @@ class AutoClicker(Base_class):
         self.lista_clicks = []
         self.atajos = {
             'agregar pos': {'key': 'f4', 'funcion': lambda: self.agregar_click(teclado=True)},
-            # 'reset': {'key': pynput.keyboard.Key.f10.value.char, 'funcion': self.func_reset},
+            'reset': {'key': 'f11', 'funcion': self.reset},
             'imitar': {'key': pynput.keyboard.Key.f8.name, 'funcion': self.func_imitar},
             'solo mover': {'key': 'f7', 'funcion': self.func_solo_mover},
-            # 'capturar': {'key': pynput.keyboard.Key.f11.value.char, 'funcion': self.func_capturar_mouse}
+            'capturar': {'key': 'f6', 'funcion': self.func_capturar_mouse},
             'cancelar': {'key': pynput.keyboard.Key.shift_r.name, 'funcion': self.detener},
             'agregar perfil': {'key': pynput.keyboard.Key.f2.name, 'funcion': self.func_agregar_perfil}
         }
@@ -50,10 +49,17 @@ class AutoClicker(Base_class):
         self.actualizar_lista_perfiles()
     
     def on_exit(self):
+        self.detener()
         self.imitando = False
         self.solo_moviendo = False
-        self.listener_raton.stop()
-        self.listener_teclado.stop()
+        try:
+            self.listener_raton.stop()
+        except:
+            pass
+        try:
+            self.listener_teclado.stop()
+        except:
+            pass
         if self.thread_imitacion.is_alive():
             self.thread_imitacion.join(.1)
     
@@ -67,8 +73,10 @@ class AutoClicker(Base_class):
         self.text_main_title = uti_pag.Text('Autoclicker', 26, self.config.fonts['mononoki'], (self.ventana_rect.centerx, 40))
 
         self.lista_main_perfiles = uti_pag.List(
-            size=(self.ventana_rect.w*.8,self.ventana_rect.h/2 +20),
-            pos = (self.ventana_rect.centerx - (self.ventana_rect.w*.8)/2, self.text_main_title.rect.bottom + 10),
+            size=(self.ventana_rect.w*.85,self.ventana_rect.h/2 +20),
+            pos = (self.ventana_rect.centerx - (self.ventana_rect.w*.85)/2, self.text_main_title.rect.bottom + 10),
+            font=self.config.fonts['mononoki'],
+            text_size=12,
             separation=5,
             header=True,
             text_header='Perfiles',
@@ -106,7 +114,7 @@ class AutoClicker(Base_class):
         )
 
         self.btn_main_agregar_posicion = uti_pag.Button(
-            text='Agregar posicion',
+            text=f'Agregar pos({self.atajos["agregar pos"]["key"]})',
             size=12,
             font=self.config.fonts['mononoki'],
             pos=(self.input_main_repeticiones.centerx, self.input_main_repeticiones.bottom+5),
@@ -118,7 +126,7 @@ class AutoClicker(Base_class):
             min_width=self.lista_main_perfiles.width/2 -5,
         )       
         self.btn_main_capturar_mouse = uti_pag.Button(
-            text='Capturar Mouse',
+            text=f'Capturar Mouse({self.atajos["capturar"]["key"]})',
             size=12,
             font=self.config.fonts['mononoki'],
             pos=(self.input_main_coldown.centerx, self.input_main_coldown.bottom+5),
@@ -128,10 +136,11 @@ class AutoClicker(Base_class):
             border_color=(0,0,0),
             min_height=25,
             min_width=self.lista_main_perfiles.width/2 -5,
+            func=self.func_capturar_mouse
         )
 
         self.btn_main_imitar_sin_click = uti_pag.Button(
-            text='Solo Mover',
+            text=f'Solo Mover({self.atajos["solo mover"]["key"]})',
             size=12,
             font=self.config.fonts['mononoki'],
             pos=(self.btn_main_agregar_posicion.centerx, self.btn_main_agregar_posicion.bottom+5),
@@ -144,7 +153,7 @@ class AutoClicker(Base_class):
             func=self.func_solo_mover
         )
         self.btn_main_imitar = uti_pag.Button(
-            text='Imitar',
+            text=f'Imitar({self.atajos["imitar"]["key"]})',
             size=12,
             font=self.config.fonts['mononoki'],
             pos=(self.btn_main_capturar_mouse.centerx, self.btn_main_capturar_mouse.bottom+5),
@@ -158,7 +167,7 @@ class AutoClicker(Base_class):
         )
 
         self.btn_main_reset = uti_pag.Button(
-            text='Reset',
+            text=f'Reset({self.atajos["reset"]["key"]})',
             size=12,
             font=self.config.fonts['mononoki'],
             pos=(self.lista_main_perfiles.centerx, self.btn_main_imitar_sin_click.bottom+5),
@@ -171,6 +180,19 @@ class AutoClicker(Base_class):
             func=self.reset
         )
         
+        self.btn_main_detener = uti_pag.Button(
+            text=f'Detener({self.atajos["cancelar"]["key"]})',
+            size=16,
+            font=self.config.fonts['mononoki'],
+            pos=(self.ventana_rect.centerx, self.ventana_rect.height+100),
+            dire='center',
+            border_radius=10,
+            border_width=2,
+            border_color=(0,0,0),
+            padding=20,
+            func=lambda: (self.lista_clicks.pop() if (len(self.lista_clicks) > 0 and self.capturando) else None, self.detener())
+        )
+        self.btn_main_detener.smothmove(1,.8,.5)
 
         self.text_main_num_clicks_actuales = uti_pag.Text('0 clicks', 12, self.config.fonts['mononoki'], (self.ventana_rect.centerx, self.btn_main_reset.bottom+5), 'top')
 
@@ -185,7 +207,8 @@ class AutoClicker(Base_class):
             self.btn_main_imitar_sin_click,
             self.btn_main_imitar,
             self.btn_main_reset,
-            self.text_main_num_clicks_actuales
+            self.text_main_num_clicks_actuales,
+            self.btn_main_detener
         ]
         self.lists_screens['main']['update'] = self.lists_screens['main']['draw']
 
@@ -199,6 +222,7 @@ class AutoClicker(Base_class):
             self.btn_main_imitar_sin_click,
             self.btn_main_imitar,
             self.btn_main_reset,
+            self.btn_main_detener
         ]
         self.lists_screens['main']['inputs'] = [
             self.input_main_repeticiones,
@@ -223,7 +247,10 @@ class AutoClicker(Base_class):
                     )
             if evento.type == pag.KEYDOWN:
                 if evento.key == pag.K_ESCAPE:
-                    self.exit()
+                    if self.capturando or self.imitando:
+                        self.detener()
+                    else:
+                        self.exit()
 
 
     # Funciones del programa
@@ -245,8 +272,23 @@ class AutoClicker(Base_class):
         self.capturando = False
         self.imitando = False
         self.solo_moviendo = False
-        if self.thread_imitacion.is_alive():
+        try:
             self.thread_imitacion.join(.1)
+        except:
+            pass
+        try:
+            self.listener_raton.stop()
+        except:
+            pass
+        self.text_main_title.color = 'white'
+
+        self.btn_main_imitar.change_color_rect_ad('lightgrey', 'grey')
+        self.btn_main_imitar_sin_click.change_color_rect_ad('lightgrey', 'grey')
+        self.btn_main_capturar_mouse.change_color_rect_ad('lightgrey', 'grey')
+
+        self.btn_main_detener.pos = (self.ventana_rect.centerx, self.ventana_rect.height+100)
+
+        self.redraw = True
 
     
     def keyboard_handler(self,key: pynput.keyboard.KeyCode|pynput.keyboard.Key):
@@ -283,7 +325,7 @@ class AutoClicker(Base_class):
             pos = self.mouse_controller.position
         self.lista_clicks.append((*pos,((time.time()-self.tiempo) if self.tiempo > 0 else 0),btn))
         self.tiempo = time.time()
-        uti.debug_print(self.lista_clicks)
+        # uti.debug_print(self.lista_clicks)
         self.text_main_num_clicks_actuales.text = str(len(self.lista_clicks)) + ' clicks'
 
     def set_vars(self):
@@ -299,28 +341,34 @@ class AutoClicker(Base_class):
             self.input_main_coldown.set(0)
 
     def func_solo_mover(self):
-        if self.imitando:
+        if self.imitando or self.capturando:
             return
         self.imitando = True
         self.solo_moviendo = True
         self.text_main_title.color = 'yellow'
+        self.btn_main_imitar_sin_click.change_color_rect_ad('yellow', 'lightgrey')
         self.set_vars()
         if self.thread_imitacion.is_alive():
             self.thread_imitacion.join(.1)
         self.thread_imitacion = Thread(target=self.imitar,daemon=True)
         self.thread_imitacion.start()
+        self.redraw = True
     
     def func_imitar(self):
-        if self.imitando:
+        if self.imitando or self.capturando:
             return
         self.imitando = True
         self.solo_moviendo = False
         self.text_main_title.color = 'green'
+        self.btn_main_imitar.change_color_rect_ad('green', 'lightgrey')
+    
         self.set_vars()
+
         if self.thread_imitacion.is_alive():
             self.thread_imitacion.join(.1)
         self.thread_imitacion = Thread(target=self.imitar,daemon=True)
         self.thread_imitacion.start()
+        self.redraw = True
     
     def imitar(self):
         for _ in range(self.limite):
@@ -329,16 +377,14 @@ class AutoClicker(Base_class):
             for x,y,tiempo,boton in self.lista_clicks:
                 if not self.imitando:
                     break
-                # self.mouse_controller.move(x,y)
                 time.sleep(tiempo)
+                if not self.imitando:
+                    break
                 self.mouse_controller.position = (x,y)
-                time.sleep(.1)
                 if not self.solo_moviendo:
                     self.mouse_controller.click(pynput.mouse.Button.left if boton == 1 else pynput.mouse.Button.right)
             time.sleep(self.coldown)
-        self.imitando = False
-        self.text_main_title.color = 'white'
-        self.solo_moviendo = False
+        self.detener()
 
     def func_agregar_perfil(self):
         perfil = askstring('Agregar perfil', 'Nombre del perfil')
@@ -359,9 +405,23 @@ class AutoClicker(Base_class):
         #     self.DB.eliminar_perfil(result['obj'])
         #     self.actualizar_lista_perfiles()
 
+    def func_capturar_mouse(self):
+        self.btn_main_detener.pos = (self.ventana_rect.centerx, self.ventana_rect.height-100)
+        self.capturando = True
+        self.imitando = False
+        self.solo_moviendo = False
+        self.text_main_title.color = 'purple'
+        self.btn_main_capturar_mouse.change_color_rect_ad('purple', 'lightgrey')
+        try:
+            self.listener_raton.stop()
+        except:
+            pass
+        self.listener_raton = pynput.mouse.Listener(on_click=self.mouse_handler)
+        self.listener_raton.start()
+    
+
 if __name__ == '__main__':
     # Iniciar el programa
-    # os.chdir(Path(__file__).parent)
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     config = uti_pag.Config(
         resolution=(360,520),
@@ -369,7 +429,7 @@ if __name__ == '__main__':
         title='AutoClicker',
         my_company='Edouard Sandoval',
         author='Edouard Sandoval',
-        version='1.0.0',
+        version='2.1.0',
         fonts={'mononoki': './Data/fonts/mononoki Bold Nerd Font Complete Mono.ttf'}
     )
     AutoClicker(config=config)
