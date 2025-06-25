@@ -430,6 +430,6 @@ if __name__ == '__main__':
         my_company='Edouard Sandoval',
         author='Edouard Sandoval',
         version='2.1.0',
-        fonts={'mononoki': './Data/fonts/mononoki Bold Nerd Font Complete Mono.ttf'}
+        fonts={'mononoki': './Data/fonts/mononoki Bold Nerd Font Complete Mono.ttf'},
     )
     AutoClicker(config=config)
